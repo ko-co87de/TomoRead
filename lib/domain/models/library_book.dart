@@ -1,4 +1,5 @@
 import 'epub_manifest.dart';
+import 'reading_status.dart';
 
 class LibraryBook {
   const LibraryBook({
@@ -20,6 +21,7 @@ class LibraryBook {
     this.category,
     this.tags = const [],
     this.isFavorite = false,
+    this.readingStatus = ReadingStatus.newBook,
   });
 
   final String id;
@@ -32,6 +34,7 @@ class LibraryBook {
   final String? category;
   final List<String> tags;
   final bool isFavorite;
+  final ReadingStatus readingStatus;
   final double progress;
   final DateTime importedAt;
   final DateTime? updatedAt;
@@ -50,6 +53,7 @@ class LibraryBook {
     String? locator,
     List<String>? tags,
     bool? isFavorite,
+    ReadingStatus? readingStatus,
     double? progress,
     int? chapterIndex,
     DateTime? updatedAt,
@@ -74,6 +78,7 @@ class LibraryBook {
     category: clearCategory ? null : category ?? this.category,
     tags: tags ?? this.tags,
     isFavorite: isFavorite ?? this.isFavorite,
+    readingStatus: readingStatus ?? this.readingStatus,
     direction: direction,
   );
 }

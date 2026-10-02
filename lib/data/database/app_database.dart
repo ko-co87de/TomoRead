@@ -23,7 +23,7 @@ class AppDatabase {
   final bool _singleInstance;
   Future<Database>? _database;
 
-  static const schemaVersion = 24;
+  static const schemaVersion = 25;
 
   Future<Database> get database => _database ??= _open();
 
@@ -269,6 +269,9 @@ class AppDatabase {
           if (oldVersion < 24) {
             await _upgradeToVersion24(database);
           }
+          if (oldVersion < 25) {
+            await _upgradeToVersion25(database);
+          }
         },
       ),
     );
@@ -310,6 +313,7 @@ class AppDatabase {
               category TEXT,
               tags_json TEXT NOT NULL DEFAULT '[]',
               is_favorite INTEGER NOT NULL DEFAULT 0,
+              reading_status TEXT NOT NULL DEFAULT 'new',
               created_at INTEGER NOT NULL,
               updated_at INTEGER NOT NULL,
               sync_revision INTEGER NOT NULL DEFAULT 1
@@ -667,6 +671,22 @@ class AppDatabase {
   Future<void> _upgradeToVersion24(Database database) => database.execute(
     "ALTER TABLE book_reading_overrides ADD COLUMN reader_theme_json TEXT NOT NULL DEFAULT '{\"preset\":\"followApp\"}'",
   );
+
+  Future<void> _upgradeToVersion25(Database database) async {
+    await _addColumnIfMissing(
+      database,
+      table: 'books',
+      column: 'reading_status',
+      definition: "TEXT NOT NULL DEFAULT 'new'",
+    );
+    await database.execute('''
+      UPDATE books SET reading_status = CASE
+        WHEN progress >= 0.95 THEN 'finished'
+        WHEN progress > 0 THEN 'reading'
+        ELSE 'new'
+      END
+    ''');
+  }
 
   Future<void> _createEmbeddingTables(Database database) async {
     await database.execute('''

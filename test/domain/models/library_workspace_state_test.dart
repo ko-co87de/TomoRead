@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tomoread/domain/models/library_workspace_state.dart';
+import 'package:tomoread/domain/models/reading_status.dart';
 
 void main() {
   test('round-trips the selected library workspace state', () {
@@ -10,6 +11,7 @@ void main() {
       category: 'Markdown',
       tag: 'reference',
       favoritesOnly: true,
+      readingStatus: ReadingStatus.reading,
     );
 
     expect(LibraryWorkspaceState.fromJson(state.toJson()), state);

@@ -4,6 +4,7 @@ import 'package:sqflite_common/sqlite_api.dart';
 
 import '../../domain/models/epub_manifest.dart';
 import '../../domain/models/library_book.dart';
+import '../../domain/models/reading_status.dart';
 import '../database/app_database.dart';
 
 class BookRepository {
@@ -48,16 +49,32 @@ class BookRepository {
     String? locator,
   }) async {
     final database = await _database.database;
-    await database.update(
-      'books',
-      {
-        'chapter_index': chapterIndex,
-        'progress': progress.clamp(0, 1),
-        'locator': locator,
-        'updated_at': DateTime.now().millisecondsSinceEpoch,
-      },
-      where: 'id = ?',
-      whereArgs: [bookId],
+    final clamped = progress.clamp(0, 1);
+    await database.rawUpdate(
+      '''
+      UPDATE books SET
+        chapter_index = ?,
+        progress = ?,
+        locator = ?,
+        reading_status = CASE
+          WHEN ? >= ? THEN 'finished'
+          WHEN reading_status = 'finished' THEN 'reading'
+          WHEN ? > 0 AND reading_status IN ('new', 'want_to_read') THEN 'reading'
+          ELSE reading_status
+        END,
+        updated_at = ?
+      WHERE id = ?
+      ''',
+      [
+        chapterIndex,
+        clamped,
+        locator,
+        clamped,
+        ReadingStatus.finishedThreshold,
+        clamped,
+        DateTime.now().millisecondsSinceEpoch,
+        bookId,
+      ],
     );
   }
 
@@ -125,6 +142,39 @@ class BookRepository {
     );
   }
 
+  Future<void> setReadingStatus(String bookId, ReadingStatus status) async {
+    final database = await _database.database;
+    await database.update(
+      'books',
+      {
+        'reading_status': status.dbValue,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [bookId],
+    );
+  }
+
+  Future<void> setReadingStatusForBooks(
+    Iterable<String> bookIds,
+    ReadingStatus status,
+  ) async {
+    final ids = bookIds.toList(growable: false);
+    if (ids.isEmpty) return;
+    final database = await _database.database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await database.transaction((transaction) async {
+      for (final bookId in ids) {
+        await transaction.update(
+          'books',
+          {'reading_status': status.dbValue, 'updated_at': now},
+          where: 'id = ?',
+          whereArgs: [bookId],
+        );
+      }
+    });
+  }
+
   Future<void> setFavoriteForBooks(
     Iterable<String> bookIds,
     bool isFavorite,
@@ -189,6 +239,7 @@ class BookRepository {
         'category': book.category,
         'tags_json': jsonEncode(book.tags),
         'is_favorite': book.isFavorite ? 1 : 0,
+        'reading_status': book.readingStatus.dbValue,
         'progress': book.progress,
         'chapter_index': 0,
         'chapter_count': book.chapterCount,
@@ -220,6 +271,7 @@ class BookRepository {
       'category': book.category,
       'tags_json': jsonEncode(book.tags),
       'is_favorite': book.isFavorite ? 1 : 0,
+      'reading_status': book.readingStatus.dbValue,
       'progress': book.progress,
       'chapter_index': book.chapterIndex,
       'chapter_count': book.chapterCount,
@@ -256,6 +308,7 @@ class BookRepository {
     category: row['category'] as String?,
     tags: _tagsFromRow(row['tags_json']),
     isFavorite: (row['is_favorite'] as int? ?? 0) == 1,
+    readingStatus: ReadingStatus.fromDb(row['reading_status']),
     progress: (row['progress']! as num).toDouble(),
     importedAt: DateTime.fromMillisecondsSinceEpoch(row['created_at']! as int),
     updatedAt: DateTime.fromMillisecondsSinceEpoch(row['updated_at']! as int),

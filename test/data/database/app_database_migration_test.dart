@@ -112,7 +112,7 @@ void main() {
     addTearDown(appDatabase.close);
     final database = await appDatabase.database;
 
-    expect(await database.getVersion(), 24);
+    expect(await database.getVersion(), 25);
     final parts = await database.query('chat_message_parts');
     expect(parts.single['type'], 'text');
     expect(parts.single['text_content'], 'Legacy answer');
@@ -214,6 +214,90 @@ void main() {
     expect(
       readingOverrideColumns.map((column) => column['name']),
       contains('reader_theme_json'),
+    );
+  });
+
+  test('adds reading_status to books and backfills from progress', () async {
+    sqfliteFfiInit();
+    final directory = await Directory.systemTemp.createTemp(
+      'tomoread-migration-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final databasePath = '${directory.path}${Platform.pathSeparator}app.db';
+    final oldDatabase = await databaseFactoryFfi.openDatabase(
+      databasePath,
+      options: OpenDatabaseOptions(
+        version: 24,
+        onCreate: (database, _) async {
+          await database.execute("""
+            CREATE TABLE books (
+              id TEXT PRIMARY KEY,
+              title TEXT NOT NULL,
+              author TEXT NOT NULL,
+              file_hash TEXT NOT NULL,
+              file_path TEXT NOT NULL,
+              cover_path TEXT,
+              description TEXT,
+              format TEXT NOT NULL DEFAULT 'epub',
+              progress REAL NOT NULL DEFAULT 0,
+              locator TEXT,
+              chapter_index INTEGER NOT NULL DEFAULT 0,
+              chapter_count INTEGER NOT NULL DEFAULT 0,
+              epub_version TEXT,
+              read_direction TEXT NOT NULL DEFAULT 'ltr',
+              category TEXT,
+              tags_json TEXT NOT NULL DEFAULT '[]',
+              is_favorite INTEGER NOT NULL DEFAULT 0,
+              created_at INTEGER NOT NULL,
+              updated_at INTEGER NOT NULL
+            )
+          """);
+          for (final row in const [
+            ('book-finished', 0.96),
+            ('book-reading', 0.3),
+            ('book-new', 0.0),
+          ]) {
+            await database.insert('books', {
+              'id': row.$1,
+              'title': row.$1,
+              'author': 'Author',
+              'file_hash': 'hash-${row.$1}',
+              'file_path': '/tmp/x.epub',
+              'progress': row.$2,
+              'created_at': 1,
+              'updated_at': 1,
+            });
+          }
+        },
+      ),
+    );
+    await oldDatabase.close();
+
+    final appDatabase = AppDatabase(
+      databaseFactory: databaseFactoryFfi,
+      pathProvider: () async => databasePath,
+    );
+    addTearDown(appDatabase.close);
+    final database = await appDatabase.database;
+
+    expect(await database.getVersion(), 25);
+    final columns = await database.rawQuery('PRAGMA table_info(books)');
+    expect(
+      columns.map((column) => column['name']),
+      contains('reading_status'),
+    );
+    final rows = await database.query(
+      'books',
+      columns: ['id', 'reading_status'],
+      orderBy: 'id',
+    );
+    expect(
+      rows.map((row) => (row['id'], row['reading_status'])).toList(),
+      [
+        ('book-finished', 'finished'),
+        ('book-new', 'new'),
+        ('book-reading', 'reading'),
+      ],
     );
   });
 }

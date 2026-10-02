@@ -1,3 +1,5 @@
+import 'reading_status.dart';
+
 enum LibraryFormatFilter { all, epub, pdf, text }
 
 enum LibrarySort { recent, title, progress }
@@ -15,6 +17,7 @@ class LibraryWorkspaceState {
     this.category = allCategoriesFilter,
     this.tag,
     this.favoritesOnly = false,
+    this.readingStatus,
   });
 
   static const version = 1;
@@ -25,6 +28,7 @@ class LibraryWorkspaceState {
   final String category;
   final String? tag;
   final bool favoritesOnly;
+  final ReadingStatus? readingStatus;
 
   factory LibraryWorkspaceState.fromJson(Object? source) {
     if (source is! Map<Object?, Object?> || source['version'] != version) {
@@ -41,6 +45,7 @@ class LibraryWorkspaceState {
           : allCategoriesFilter,
       tag: tag is String && tag.trim().isNotEmpty ? tag.trim() : null,
       favoritesOnly: source['favoritesOnly'] == true,
+      readingStatus: _readingStatusFromName(source['readingStatus']),
     );
   }
 
@@ -52,6 +57,7 @@ class LibraryWorkspaceState {
     'category': category,
     'tag': tag,
     'favoritesOnly': favoritesOnly,
+    'readingStatus': readingStatus?.name,
   };
 
   LibraryWorkspaceState copyWith({
@@ -61,7 +67,9 @@ class LibraryWorkspaceState {
     String? category,
     String? tag,
     bool? favoritesOnly,
+    ReadingStatus? readingStatus,
     bool clearTag = false,
+    bool clearReadingStatus = false,
   }) => LibraryWorkspaceState(
     formatFilter: formatFilter ?? this.formatFilter,
     sort: sort ?? this.sort,
@@ -69,6 +77,7 @@ class LibraryWorkspaceState {
     category: category ?? this.category,
     tag: clearTag ? null : tag ?? this.tag,
     favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+    readingStatus: clearReadingStatus ? null : readingStatus ?? this.readingStatus,
   );
 
   LibraryWorkspaceState normalizedForOptions({
@@ -89,6 +98,7 @@ class LibraryWorkspaceState {
       category: validCategory,
       tag: validTag,
       favoritesOnly: favoritesOnly,
+      readingStatus: readingStatus,
     );
   }
 
@@ -100,11 +110,19 @@ class LibraryWorkspaceState {
       other.viewMode == viewMode &&
       other.category == category &&
       other.tag == tag &&
-      other.favoritesOnly == favoritesOnly;
+      other.favoritesOnly == favoritesOnly &&
+      other.readingStatus == readingStatus;
 
   @override
-  int get hashCode =>
-      Object.hash(formatFilter, sort, viewMode, category, tag, favoritesOnly);
+  int get hashCode => Object.hash(
+    formatFilter,
+    sort,
+    viewMode,
+    category,
+    tag,
+    favoritesOnly,
+    readingStatus,
+  );
 }
 
 LibraryFormatFilter _formatFilterFromName(Object? value) =>
@@ -117,6 +135,14 @@ LibrarySort _sortFromName(Object? value) => LibrarySort.values.firstWhere(
   (item) => item.name == value,
   orElse: () => LibrarySort.recent,
 );
+
+ReadingStatus? _readingStatusFromName(Object? value) {
+  if (value is! String || value.isEmpty) return null;
+  for (final status in ReadingStatus.values) {
+    if (status.name == value) return status;
+  }
+  return null;
+}
 
 LibraryViewMode _viewModeFromName(Object? value) =>
     LibraryViewMode.values.firstWhere(
