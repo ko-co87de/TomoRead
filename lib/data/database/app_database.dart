@@ -673,6 +673,10 @@ class AppDatabase {
   );
 
   Future<void> _upgradeToVersion25(Database database) async {
+    final booksTable = await database.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'books'",
+    );
+    if (booksTable.isEmpty) return;
     await _addColumnIfMissing(
       database,
       table: 'books',
