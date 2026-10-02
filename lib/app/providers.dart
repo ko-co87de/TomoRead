@@ -17,6 +17,7 @@ import '../data/repositories/pomodoro_repository.dart';
 import '../data/repositories/reader_command_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/skill_repository.dart';
+import '../data/repositories/sync_repository.dart';
 import '../data/repositories/text_coloring_repository.dart';
 import '../data/repositories/text_content_repository.dart';
 import '../data/repositories/text_projection_repository.dart';
@@ -60,6 +61,7 @@ import '../data/services/tts_queue_service.dart';
 import '../data/services/mind_map_generation_service.dart';
 import '../data/services/visual_artifact_export_service.dart';
 import '../data/services/word_frequency_service.dart';
+import '../data/services/webdav_config_store.dart';
 import '../domain/models/bookmark.dart';
 import '../domain/models/content_chunk.dart';
 import '../domain/models/embedding_models.dart';
@@ -242,6 +244,14 @@ final restoreServiceProvider = FutureProvider<RestoreService>((ref) async {
 
 final storageDiagnosticsServiceProvider = Provider<StorageDiagnosticsService>(
   (ref) => StorageDiagnosticsService(database: ref.watch(appDatabaseProvider)),
+);
+
+final syncRepositoryProvider = Provider<SyncRepository>(
+  (ref) => SyncRepository(ref.watch(appDatabaseProvider)),
+);
+
+final webDavConfigStoreProvider = Provider<WebDavConfigStore>(
+  (ref) => WebDavConfigStore(database: ref.watch(appDatabaseProvider)),
 );
 
 final contentSearchProvider = FutureProvider.autoDispose

@@ -17,9 +17,10 @@ import 'backup_restore_page.dart';
 import 'embedding_settings_page.dart';
 import 'font_catalog_controller.dart';
 import 'storage_diagnostics_page.dart';
+import 'sync_settings_page.dart';
 import 'volume_key_page_turning_setting.dart';
 
-enum _SettingsSection { appearance, reading, aiVector, dataPrivacy }
+enum _SettingsSection { appearance, reading, aiVector, sync, dataPrivacy }
 
 class SettingsPage extends HookConsumerWidget {
   const SettingsPage({
@@ -140,6 +141,7 @@ class SettingsPage extends HookConsumerWidget {
             ref.read(textColoringSettingsProvider.notifier).saveSettings(value),
       ),
       _SettingsSection.aiVector => const EmbeddingSettingsPage(),
+      _SettingsSection.sync => const SyncSettingsPage(),
       _SettingsSection.dataPrivacy => const _DataPrivacySettings(),
     };
 
@@ -256,6 +258,12 @@ class _SettingsNavigation extends StatelessWidget {
         label: 'نماذج الذكاء الاصطناعي والمتجهات',
         selected: selected == _SettingsSection.aiVector,
         onTap: () => onSelected(_SettingsSection.aiVector),
+      ),
+      _NavigationItem(
+        icon: Icons.sync_outlined,
+        label: 'المزامنة',
+        selected: selected == _SettingsSection.sync,
+        onTap: () => onSelected(_SettingsSection.sync),
       ),
       _NavigationItem(
         icon: Icons.shield_outlined,
@@ -775,6 +783,7 @@ String _sectionTitle(_SettingsSection section) => switch (section) {
   _SettingsSection.appearance => 'المظهر',
   _SettingsSection.reading => 'القراءة الافتراضية',
   _SettingsSection.aiVector => 'نماذج الذكاء الاصطناعي والمتجهات',
+  _SettingsSection.sync => 'المزامنة',
   _SettingsSection.dataPrivacy => 'البيانات والخصوصية',
 };
 
@@ -782,6 +791,7 @@ IconData _settingsSectionIcon(_SettingsSection section) => switch (section) {
   _SettingsSection.appearance => Icons.palette_outlined,
   _SettingsSection.reading => Icons.menu_book_outlined,
   _SettingsSection.aiVector => Icons.hub_outlined,
+  _SettingsSection.sync => Icons.sync_outlined,
   _SettingsSection.dataPrivacy => Icons.shield_outlined,
 };
 
@@ -807,5 +817,6 @@ String _sectionSubtitle(_SettingsSection section) => switch (section) {
   _SettingsSection.appearance => 'اضبط السمة واللون والخط وقياس الواجهة.',
   _SettingsSection.reading => 'قم بتعيين الطباعة الافتراضية لكتب EPUB المفتوحة حديثًا.',
   _SettingsSection.aiVector => 'تكوين خدمة التضمين، وتفويض الجسم عن بعد، والفهرسة الدلالية بشكل مستقل.',
+  _SettingsSection.sync => 'مزامنة العلامات المرجعية والتعليقات عبر WebDAV يدويًا مع دعم الإيقاف والاستئناف.',
   _SettingsSection.dataPrivacy => 'إنشاء نسخ احتياطية يمكن التحقق منها، واستردادها بشكل آمن وتنظيفها لإعادة بناء ذاكرة التخزين المؤقت.',
 };

@@ -149,6 +149,19 @@ class SyncRepository {
         .toList(growable: false);
   }
 
+  /// All sync records for one entity type (both upserts and delete
+  /// tombstones), ordered by entity id.
+  Future<List<SyncEnvelope>> recordsOfType(SyncEntityType type) async {
+    final database = await _database.database;
+    final rows = await database.query(
+      'sync_records',
+      where: 'entity_type = ?',
+      whereArgs: [type.name],
+      orderBy: 'entity_id ASC',
+    );
+    return rows.map(_rowEnvelope).toList(growable: false);
+  }
+
   Future<List<SyncConflict>> pendingConflicts() async {
     final database = await _database.database;
     final rows = await database.query(
