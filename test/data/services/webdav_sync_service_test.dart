@@ -55,7 +55,7 @@ class _FakeWebDavServer {
       case 'GET':
         final body = files[path];
         if (body == null) return http.Response('', 404);
-        return http.Response(
+        return http.Response.bytes(
           utf8.encode(body),
           200,
           headers: {'etag': etags[path] ?? ''},
