@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../domain/models/library_book.dart';
+import '../../domain/models/reading_status.dart';
 import '../../shared/text/book_description_formatter.dart';
 import '../../shared/widgets/book_cover.dart';
 
@@ -100,6 +101,23 @@ class BookDetailsPage extends HookConsumerWidget {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('فشل تحديث حالة التجميع: $error')));
+      }
+    }
+
+    Future<void> changeReadingStatus(ReadingStatus status) async {
+      if (status == displayedBook.readingStatus) return;
+      try {
+        await ref
+            .read(bookRepositoryProvider)
+            .setReadingStatus(displayedBook.id, status);
+        currentBook.value = displayedBook.copyWith(readingStatus: status);
+        ref.invalidate(libraryBooksProvider);
+        ref.invalidate(readerBookProvider(displayedBook.id));
+      } catch (error) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('فشل تحديث حالة القراءة: $error')));
       }
     }
 
@@ -235,6 +253,7 @@ class BookDetailsPage extends HookConsumerWidget {
                       isDescriptionExpanded.value =
                           !isDescriptionExpanded.value,
                   onOpenReader: () => onOpenReader(displayedBook),
+                  onReadingStatusChanged: changeReadingStatus,
                 );
 
           return SingleChildScrollView(
@@ -295,12 +314,14 @@ class _BookDetailsContent extends StatelessWidget {
     required this.isDescriptionExpanded,
     required this.onDescriptionExpansionChanged,
     required this.onOpenReader,
+    required this.onReadingStatusChanged,
   });
 
   final LibraryBook book;
   final bool isDescriptionExpanded;
   final VoidCallback onDescriptionExpansionChanged;
   final VoidCallback onOpenReader;
+  final ValueChanged<ReadingStatus> onReadingStatusChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -352,6 +373,23 @@ class _BookDetailsContent extends StatelessWidget {
               Chip(
                 avatar: const Icon(Icons.sell_outlined, size: 18),
                 label: Text(tag),
+              ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Text('حالة القراءة', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final status in ReadingStatus.values)
+              ChoiceChip(
+                selected: book.readingStatus == status,
+                onSelected: (selected) {
+                  if (selected) onReadingStatusChanged(status);
+                },
+                label: Text(status.label),
               ),
           ],
         ),

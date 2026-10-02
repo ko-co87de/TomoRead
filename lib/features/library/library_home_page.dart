@@ -9,6 +9,7 @@ import '../../data/services/book_import_service.dart';
 import '../../domain/models/book_import.dart';
 import '../../domain/models/library_book.dart';
 import '../../domain/models/library_workspace_state.dart';
+import '../../domain/models/reading_status.dart';
 import '../../shared/widgets/page_header.dart';
 import 'book_import_preview_dialog.dart';
 import 'import_result_handler.dart';
@@ -161,6 +162,13 @@ class LibraryHomePage extends HookConsumerWidget {
       ref.invalidate(libraryBooksProvider);
     }
 
+    Future<void> setBookStatus(LibraryBook book, ReadingStatus status) async {
+      await ref
+          .read(bookRepositoryProvider)
+          .setReadingStatus(book.id, status);
+      ref.invalidate(libraryBooksProvider);
+    }
+
     void toggleSelection(String bookId) {
       final next = {...selectedBookIds.value};
       if (!next.add(bookId)) next.remove(bookId);
@@ -201,6 +209,25 @@ class LibraryHomePage extends HookConsumerWidget {
         await ref
             .read(bookRepositoryProvider)
             .setCategoryForBooks(selected, update.category);
+        ref.invalidate(libraryBooksProvider);
+      } finally {
+        if (context.mounted) isBatchOperating.value = false;
+      }
+    }
+
+    Future<void> updateSelectedReadingStatus(List<LibraryBook> items) async {
+      final selected = selectedBookIds.value;
+      if (selected.isEmpty || isBatchOperating.value) return;
+      final status = await showDialog<ReadingStatus>(
+        context: context,
+        builder: (context) => const ReadingStatusDialog(),
+      );
+      if (status == null || !context.mounted) return;
+      isBatchOperating.value = true;
+      try {
+        await ref
+            .read(bookRepositoryProvider)
+            .setReadingStatusForBooks(selected, status);
         ref.invalidate(libraryBooksProvider);
       } finally {
         if (context.mounted) isBatchOperating.value = false;
@@ -250,6 +277,15 @@ class LibraryHomePage extends HookConsumerWidget {
         onRetry: () => ref.invalidate(libraryBooksProvider),
       ),
       data: (items) {
+        final statusCounts = <ReadingStatus, int>{
+          for (final status in ReadingStatus.values) status: 0,
+        };
+        var favoriteCount = 0;
+        for (final book in items) {
+          statusCounts[book.readingStatus] =
+              (statusCounts[book.readingStatus] ?? 0) + 1;
+          if (book.isFavorite) favoriteCount++;
+        }
         final visibleBooks = filterAndSortBooks(
           items,
           query: searchQuery.value,
@@ -258,6 +294,7 @@ class LibraryHomePage extends HookConsumerWidget {
           category: effectiveWorkspace.category,
           tag: effectiveWorkspace.tag,
           favoritesOnly: effectiveWorkspace.favoritesOnly,
+          readingStatus: effectiveWorkspace.readingStatus,
         );
         final nextReadingBook = continueReadingBook(visibleBooks);
         return LayoutBuilder(
@@ -280,6 +317,8 @@ class LibraryHomePage extends HookConsumerWidget {
               isRemoving: removingBookId.value == visibleBooks[index].id,
               onDelete: () => removeBook(visibleBooks[index]),
               onToggleFavorite: () => toggleFavorite(visibleBooks[index]),
+              onSetReadingStatus: (status) =>
+                  setBookStatus(visibleBooks[index], status),
             );
 
             Widget buildBookListItem(int index) => BookListItem(
@@ -298,6 +337,8 @@ class LibraryHomePage extends HookConsumerWidget {
               isRemoving: removingBookId.value == visibleBooks[index].id,
               onDelete: () => removeBook(visibleBooks[index]),
               onToggleFavorite: () => toggleFavorite(visibleBooks[index]),
+              onSetReadingStatus: (status) =>
+                  setBookStatus(visibleBooks[index], status),
             );
 
             final headerChildren = <Widget>[
@@ -312,6 +353,12 @@ class LibraryHomePage extends HookConsumerWidget {
               if (items.isEmpty)
                 EmptyLibrary(onImport: isImporting.value ? null : importBooks)
               else ...[
+                _LibraryStatsBar(
+                  total: items.length,
+                  favorites: favoriteCount,
+                  counts: statusCounts,
+                ),
+                const SizedBox(height: 12),
                 LibraryControls(
                   formatFilter: effectiveWorkspace.formatFilter,
                   sort: effectiveWorkspace.sort,
@@ -337,6 +384,17 @@ class LibraryHomePage extends HookConsumerWidget {
                   category: effectiveWorkspace.category,
                   tag: effectiveWorkspace.tag,
                   favoritesOnly: effectiveWorkspace.favoritesOnly,
+                  readingStatus: effectiveWorkspace.readingStatus,
+                  statusCounts: statusCounts,
+                  onReadingStatusChanged: (value) => unawaited(
+                    workspaceNotifier.save(
+                      value == null
+                          ? effectiveWorkspace.copyWith(
+                              clearReadingStatus: true,
+                            )
+                          : effectiveWorkspace.copyWith(readingStatus: value),
+                    ),
+                  ),
                   onCategoryChanged: (value) => unawaited(
                     workspaceNotifier.save(
                       effectiveWorkspace.copyWith(category: value),
@@ -368,6 +426,7 @@ class LibraryHomePage extends HookConsumerWidget {
                     onCancel: cancelSelection,
                     onToggleFavorite: () => updateSelectedFavorite(items),
                     onChangeCategory: () => updateSelectedCategory(items),
+                    onChangeStatus: () => updateSelectedReadingStatus(items),
                     onDelete: () => removeSelectedBooks(items),
                   ),
                 if (selectionMode.value) const SizedBox(height: 16),
@@ -454,6 +513,75 @@ class LibraryHomePage extends HookConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _LibraryStatsBar extends StatelessWidget {
+  const _LibraryStatsBar({
+    required this.total,
+    required this.favorites,
+    required this.counts,
+  });
+
+  final int total;
+  final int favorites;
+  final Map<ReadingStatus, int> counts;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    Widget stat(IconData icon, String label, int count, Color color) =>
+        Expanded(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  '$label $count',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+            ],
+          ),
+        );
+    return Material(
+      color: colors.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            stat(Icons.menu_book_outlined, 'الإجمالي', total, colors.primary),
+            stat(
+              Icons.auto_stories_outlined,
+              'تقرأ الآن',
+              counts[ReadingStatus.reading] ?? 0,
+              colors.tertiary,
+            ),
+            stat(
+              Icons.check_circle_outline,
+              'مكتملة',
+              counts[ReadingStatus.finished] ?? 0,
+              colors.secondary,
+            ),
+            stat(
+              Icons.bookmark_add_outlined,
+              'أريد قراءتها',
+              counts[ReadingStatus.wantToRead] ?? 0,
+              colors.outline,
+            ),
+            stat(Icons.favorite, 'المفضلة', favorites, colors.error),
+          ],
+        ),
+      ),
     );
   }
 }

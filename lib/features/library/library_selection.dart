@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
+import '../../domain/models/reading_status.dart';
+
 class LibrarySelectionToolbar extends StatelessWidget {
   const LibrarySelectionToolbar({
     super.key,
@@ -10,6 +12,7 @@ class LibrarySelectionToolbar extends StatelessWidget {
     required this.onCancel,
     required this.onToggleFavorite,
     required this.onChangeCategory,
+    required this.onChangeStatus,
     required this.onDelete,
   });
 
@@ -19,6 +22,7 @@ class LibrarySelectionToolbar extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onToggleFavorite;
   final VoidCallback onChangeCategory;
+  final VoidCallback onChangeStatus;
   final VoidCallback onDelete;
 
   @override
@@ -51,6 +55,13 @@ class LibrarySelectionToolbar extends StatelessWidget {
                 ? null
                 : onChangeCategory,
             icon: const Icon(Icons.folder_outlined),
+          ),
+          IconButton(
+            tooltip: 'تعيين حالة القراءة',
+            onPressed: isWorking || selectedCount == 0
+                ? null
+                : onChangeStatus,
+            icon: const Icon(Icons.bookmark_border),
           ),
           IconButton(
             tooltip: 'حذف الكتاب',
@@ -130,4 +141,40 @@ class CategoryDialog extends HookWidget {
       ],
     );
   }
+}
+
+class ReadingStatusDialog extends StatelessWidget {
+  const ReadingStatusDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('تعيين حالة القراءة'),
+    content: SizedBox(
+      width: 360,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final status in ReadingStatus.values)
+            ListTile(
+              leading: Icon(status == ReadingStatus.reading
+                  ? Icons.auto_stories_outlined
+                  : status == ReadingStatus.finished
+                      ? Icons.check_circle_outline
+                      : status == ReadingStatus.wantToRead
+                          ? Icons.bookmark_add_outlined
+                          : Icons.menu_book_outlined),
+              title: Text(status.label),
+              onTap: () => Navigator.pop(context, status),
+            ),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('إلغاء'),
+      ),
+    ],
+  );
 }

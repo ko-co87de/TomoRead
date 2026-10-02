@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/models/library_book.dart';
 import '../../domain/models/library_workspace_state.dart';
+import '../../domain/models/reading_status.dart';
 
 extension on LibraryFormatFilter {
   String get label => switch (this) {
@@ -28,6 +29,7 @@ List<LibraryBook> filterAndSortBooks(
   required String category,
   required String? tag,
   required bool favoritesOnly,
+  required ReadingStatus? readingStatus,
 }) {
   final normalizedQuery = query.trim().toLowerCase();
   final filtered = books.where((book) {
@@ -51,6 +53,7 @@ List<LibraryBook> filterAndSortBooks(
         matchesCategory &&
         matchesTag &&
         (!favoritesOnly || book.isFavorite) &&
+        (readingStatus == null || book.readingStatus == readingStatus) &&
         (normalizedQuery.isEmpty || searchableText.contains(normalizedQuery));
   }).toList();
   filtered.sort(switch (sort) {
@@ -111,9 +114,12 @@ class LibraryControls extends StatelessWidget {
     required this.category,
     required this.tag,
     required this.favoritesOnly,
+    required this.readingStatus,
+    required this.statusCounts,
     required this.onCategoryChanged,
     required this.onTagChanged,
     required this.onFavoritesChanged,
+    required this.onReadingStatusChanged,
   });
 
   final LibraryFormatFilter formatFilter;
@@ -128,9 +134,12 @@ class LibraryControls extends StatelessWidget {
   final String category;
   final String? tag;
   final bool favoritesOnly;
+  final ReadingStatus? readingStatus;
+  final Map<ReadingStatus, int> statusCounts;
   final ValueChanged<String> onCategoryChanged;
   final ValueChanged<String?> onTagChanged;
   final ValueChanged<bool> onFavoritesChanged;
+  final ValueChanged<ReadingStatus?> onReadingStatusChanged;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -285,6 +294,29 @@ class LibraryControls extends StatelessWidget {
                           onViewModeChanged(selection.first),
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    key: const Key('library-status-all'),
+                    selected: readingStatus == null,
+                    onSelected: (_) => onReadingStatusChanged(null),
+                    label: const Text('الكل'),
+                  ),
+                  for (final status in ReadingStatus.values)
+                    ChoiceChip(
+                      selected: readingStatus == status,
+                      onSelected: (selected) => onReadingStatusChanged(
+                        selected ? status : null,
+                      ),
+                      label: Text(
+                        '${status.label} ${statusCounts[status] ?? 0}',
+                      ),
+                    ),
                 ],
               ),
               if (tags.isNotEmpty) ...[

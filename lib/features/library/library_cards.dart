@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../../domain/models/library_book.dart';
+import '../../domain/models/reading_status.dart';
 import '../../shared/widgets/book_cover.dart';
 
 class ContinueReadingCard extends StatelessWidget {
@@ -95,6 +96,7 @@ class BookCard extends HookWidget {
     required this.isRemoving,
     required this.onDelete,
     required this.onToggleFavorite,
+    required this.onSetReadingStatus,
   });
 
   final LibraryBook book;
@@ -105,6 +107,7 @@ class BookCard extends HookWidget {
   final bool isRemoving;
   final VoidCallback onDelete;
   final VoidCallback onToggleFavorite;
+  final ValueChanged<ReadingStatus> onSetReadingStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -153,6 +156,13 @@ class BookCard extends HookWidget {
                             child: BookCover(book: book),
                           ),
                         ),
+                        if (!selectionMode &&
+                            book.readingStatus != ReadingStatus.newBook)
+                          Positioned(
+                            left: 4,
+                            bottom: 4,
+                            child: _StatusBadge(status: book.readingStatus),
+                          ),
                         if (selectionMode)
                           Positioned(
                             top: 4,
@@ -174,9 +184,21 @@ class BookCard extends HookWidget {
                               child: PopupMenuButton<String>(
                                 tooltip: 'المزيد من الإجراءات',
                                 enabled: !isRemoving,
-                                onSelected: (action) => action == 'favorite'
-                                    ? onToggleFavorite()
-                                    : onDelete(),
+                                onSelected: (action) {
+                                  if (action == 'favorite') {
+                                    onToggleFavorite();
+                                  } else if (action == 'delete') {
+                                    onDelete();
+                                  } else {
+                                    onSetReadingStatus(
+                                      ReadingStatus.values.firstWhere(
+                                        (status) =>
+                                            'status:${status.dbValue}' ==
+                                            action,
+                                      ),
+                                    );
+                                  }
+                                },
                                 itemBuilder: (context) => [
                                   PopupMenuItem(
                                     value: 'favorite',
@@ -184,6 +206,15 @@ class BookCard extends HookWidget {
                                       book.isFavorite ? 'إلغاء المفضلة' : 'الكتب المفضلة',
                                     ),
                                   ),
+                                  for (final status in ReadingStatus.values)
+                                    PopupMenuItem(
+                                      value: 'status:${status.dbValue}',
+                                      child: Text(
+                                        status == book.readingStatus
+                                            ? '${status.label} ✓'
+                                            : status.label,
+                                      ),
+                                    ),
                                   PopupMenuItem(
                                     value: 'delete',
                                     child: Text('حذف الكتاب'),
@@ -241,6 +272,7 @@ class BookListItem extends StatelessWidget {
     required this.isRemoving,
     required this.onDelete,
     required this.onToggleFavorite,
+    required this.onSetReadingStatus,
   });
 
   final LibraryBook book;
@@ -251,6 +283,7 @@ class BookListItem extends StatelessWidget {
   final bool isRemoving;
   final VoidCallback onDelete;
   final VoidCallback onToggleFavorite;
+  final ValueChanged<ReadingStatus> onSetReadingStatus;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -297,6 +330,10 @@ class BookListItem extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
+                      if (book.readingStatus != ReadingStatus.newBook) ...[
+                        _StatusBadge(status: book.readingStatus),
+                        const SizedBox(width: 12),
+                      ],
                       Text(
                         book.format.toUpperCase(),
                         style: Theme.of(context).textTheme.labelSmall,
@@ -320,13 +357,33 @@ class BookListItem extends StatelessWidget {
               PopupMenuButton<String>(
                 tooltip: 'المزيد من الإجراءات',
                 enabled: !isRemoving,
-                onSelected: (action) =>
-                    action == 'favorite' ? onToggleFavorite() : onDelete(),
+                onSelected: (action) {
+                  if (action == 'favorite') {
+                    onToggleFavorite();
+                  } else if (action == 'delete') {
+                    onDelete();
+                  } else {
+                    onSetReadingStatus(
+                      ReadingStatus.values.firstWhere(
+                        (status) => 'status:${status.dbValue}' == action,
+                      ),
+                    );
+                  }
+                },
                 itemBuilder: (context) => [
                   PopupMenuItem(
                     value: 'favorite',
                     child: Text(book.isFavorite ? 'إلغاء المفضلة' : 'الكتب المفضلة'),
                   ),
+                  for (final status in ReadingStatus.values)
+                    PopupMenuItem(
+                      value: 'status:${status.dbValue}',
+                      child: Text(
+                        status == book.readingStatus
+                            ? '${status.label} ✓'
+                            : status.label,
+                      ),
+                    ),
                   PopupMenuItem(value: 'delete', child: Text('حذف الكتاب')),
                 ],
                 icon: isRemoving
@@ -342,4 +399,26 @@ class BookListItem extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
+
+  final ReadingStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        status.label,
+        style: Theme.of(context).textTheme.labelSmall,
+      ),
+    );
+  }
 }
