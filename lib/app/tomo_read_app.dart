@@ -76,7 +76,7 @@ class _TomoReadRoot extends ConsumerWidget {
             child: FilledButton.icon(
               onPressed: () => ref.invalidate(appSettingsProvider),
               icon: const Icon(Icons.refresh),
-              label: const Text('重新加载设置'),
+              label: const Text('إعادة تحميل الإعدادات'),
             ),
           ),
         ),
