@@ -86,7 +86,7 @@ void main() {
   late WebDavSyncService serviceA;
   late WebDavSyncService serviceB;
 
-  Future<void> runSync(WebDavSyncService service) => service.sync(
+  Future<WebDavSyncResult> runSync(WebDavSyncService service) => service.sync(
     onProgress: (progress) {},
     isCancelled: () => false,
   );

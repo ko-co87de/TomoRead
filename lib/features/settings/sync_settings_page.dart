@@ -48,7 +48,7 @@ class _SyncSettingsForm extends StatelessWidget {
           style: textTheme.bodyMedium,
         ),
         const SizedBox(height: 20),
-        TextField(
+        TextFormField(
           key: const Key('webdav-url'),
           enabled: _fieldsEnabled,
           initialValue: state.url,
@@ -62,7 +62,7 @@ class _SyncSettingsForm extends StatelessWidget {
           onChanged: controller.setUrl,
         ),
         const SizedBox(height: 12),
-        TextField(
+        TextFormField(
           key: const Key('webdav-username'),
           enabled: _fieldsEnabled,
           initialValue: state.username,
@@ -98,7 +98,7 @@ class _SyncSettingsForm extends StatelessWidget {
           onChanged: controller.setPassword,
         ),
         const SizedBox(height: 12),
-        TextField(
+        TextFormField(
           key: const Key('webdav-folder'),
           enabled: _fieldsEnabled,
           initialValue: state.folder,
