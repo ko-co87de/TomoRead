@@ -53,7 +53,7 @@ class WebDavConfig {
 
 class WebDavConfigStore {
   WebDavConfigStore({
-    required AppDatabase this._database,
+    required this._database,
     FlutterSecureStorage? secureStorage,
   }) : _secureStorage = secureStorage ?? const FlutterSecureStorage();
 
