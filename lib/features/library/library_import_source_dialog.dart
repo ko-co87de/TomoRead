@@ -13,7 +13,7 @@ class ImportSourceDialog extends StatelessWidget {
         onPressed: () => Navigator.of(context).pop(ImportSourceChoice.files),
         child: const ListTile(
           leading: Icon(Icons.file_open_outlined),
-          title: Text('‮اختر ملفا…'),
+          title: Text('اختر ملفا…'),
           subtitle: Text('حدد عدة ملفات EPUB أو PDF أو TXT أو Markdown في وقت واحد'),
         ),
       ),

@@ -205,12 +205,12 @@ Future<void> configureAiProvider(
                   setState(() {
                     fetchedModels = result.models;
                     probeStatus = result.succeeded
-                        ? 'تم الاتصال بنجاح · HTTP${result.statusCode} · ${result.latencyMillis} ms${result.models.isEmpty ? '' : ' · ${result.models.length}النماذج'}'
+                        ? 'تم الاتصال بنجاح · HTTP${result.statusCode} · ${result.latencyMillis} ms${result.models.isEmpty ? '' : ' · ${result.models.length} نماذج'}'
                         : 'فشل اتصال!${result.errorCode} · HTTP ${result.statusCode ?? '-'}';
                   });
                 } on Object catch (error) {
                   if (context.mounted) {
-                    setState(() => probeStatus = 'فشل اتصال!');
+                    setState(() => probeStatus = 'فشل الاتصال: $error');
                   }
                 }
               },

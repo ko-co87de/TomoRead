@@ -261,7 +261,7 @@ Future<void> _createBookThread(
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, selectedId),
-            child: const Text('‮أنشئ'),
+            child: const Text('أنشئ'),
           ),
         ],
       ),

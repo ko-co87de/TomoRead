@@ -260,7 +260,7 @@ class _ToolPartView extends StatelessWidget {
             if (detail != null) const SizedBox(height: 8),
           ],
           if (detail != null)
-            _TechnicalDetail(label: failed ? '‮عُطل' : 'النتائج', value: detail),
+            _TechnicalDetail(label: failed ? 'عُطل' : 'النتائج', value: detail),
         ],
       ),
     );

@@ -92,7 +92,7 @@ class MobileReaderTocDrawer extends HookWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'الفصل',
+                        '$chapterCount فصل',
                         style: Theme.of(context).textTheme.labelMedium,
                       ),
                     ],

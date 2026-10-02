@@ -72,7 +72,7 @@ class SettingsPage extends HookConsumerWidget {
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(dialogContext, true),
-                  child: const Text('‮اختر ملفا…'),
+                  child: const Text('اختر ملفا…'),
                 ),
               ],
             ),

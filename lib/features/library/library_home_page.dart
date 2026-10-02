@@ -148,7 +148,7 @@ class LibraryHomePage extends HookConsumerWidget {
         if (!context.mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('فشل الحذف')));
+        ).showSnackBar(SnackBar(content: Text('فشل الحذف: $error')));
       } finally {
         if (context.mounted) removingBookId.value = null;
       }

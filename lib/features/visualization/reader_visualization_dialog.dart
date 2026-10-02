@@ -159,7 +159,7 @@ class ReaderVisualizationDialog extends HookConsumerWidget {
         await controller.delete(artifact);
         if (context.mounted) selectedArtifact.value = null;
       } on Object catch (error) {
-        if (context.mounted) errorMessage.value = 'فشل الحذف';
+        if (context.mounted) errorMessage.value = 'فشل الحذف: $error';
       }
     }
 

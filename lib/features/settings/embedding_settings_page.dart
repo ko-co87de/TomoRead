@@ -156,7 +156,7 @@ class _EmbeddingProfileCard extends ConsumerWidget {
               TextButton.icon(
                 onPressed: () => _delete(context, ref),
                 icon: const Icon(Icons.delete_outline),
-                label: const Text('‮أزِل'),
+                label: const Text('أزِل'),
               ),
             ],
           ),
@@ -173,7 +173,7 @@ class _EmbeddingProfileCard extends ConsumerWidget {
       if (!context.mounted) return;
       final message = result.succeeded
           ? 'التضمين متاح:${result.dimensions}البُعد،${result.latencyMillis} ms'
-                '${result.models.isEmpty ? '' : 'لم يُعثر عليها${result.models.length}النماذج'}'
+                '${result.models.isEmpty ? '' : '، تم العثور على ${result.models.length} نموذج'}'
           : 'التضمين غير متاح:${result.errorCode ?? 'unknown'}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -200,7 +200,7 @@ class _EmbeddingProfileCard extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('‮أزِل'),
+            child: const Text('أزِل'),
           ),
         ],
       ),
@@ -455,7 +455,7 @@ Future<void> _showProfileDialog(
   } on Object catch (error) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل عملية الحفظ')),
+        SnackBar(content: Text('فشل عملية الحفظ: $error')),
       );
     }
   } finally {

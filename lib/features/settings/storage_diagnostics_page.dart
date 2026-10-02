@@ -67,7 +67,7 @@ class _DiagnosticsContent extends ConsumerWidget {
             title: Text(_categoryLabel(report.category)),
             subtitle: Text(
               '${report.fileCount}العنصر${_formatBytes(report.totalBytes)}'
-              '${report.orphanCount == 0 ? '' : ' · ${report.orphanCount}ملفات الأيتام'}',
+              '${report.orphanCount == 0 ? '' : ' · ${report.orphanCount} ملفات يتيمة'}',
             ),
             trailing: report.regenerable
                 ? const Chip(label: Text('قابلة لإعادة البناء'))
