@@ -53,10 +53,9 @@ class WebDavConfig {
 
 class WebDavConfigStore {
   WebDavConfigStore({
-    required AppDatabase database,
+    required AppDatabase this._database,
     FlutterSecureStorage? secureStorage,
-  }) : _database = database,
-       _secureStorage = secureStorage ?? const FlutterSecureStorage();
+  }) : _secureStorage = secureStorage ?? const FlutterSecureStorage();
 
   static const String passwordSecureKey = 'tomoread.webdav.password';
   static const String _urlKey = 'webdav.url';

@@ -227,13 +227,11 @@ class _LastRunSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lastSuccess = state.lastSuccessAt?.toLocal().toString();
-    final lastSuccessText = lastSuccess == null
-        ? null
-        : lastSuccess.replaceAll('T', ' ').substring(
-            0,
-            lastSuccess.length >= 16 ? 16 : lastSuccess.length,
-          );
+    final lastSuccessText = state.lastSuccessAt
+        ?.toLocal()
+        .toString()
+        .replaceAll('T', ' ')
+        .substring(0, 16);
     return Wrap(
       spacing: 16,
       runSpacing: 4,
