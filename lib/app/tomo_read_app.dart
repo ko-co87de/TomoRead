@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../data/database/app_database.dart';
@@ -50,6 +51,17 @@ class _TomoReadRoot extends ConsumerWidget {
       theme: theme,
       darkTheme: darkTheme,
       themeMode: appearance.mode,
+      locale: const Locale('ar'),
+      supportedLocales: const [
+        Locale('ar'),
+        Locale('en'),
+        Locale('zh'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(
           context,
