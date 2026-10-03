@@ -422,7 +422,7 @@ class _BookDetailsContent extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            Text('هو قراءة:${(book.progress * 100).round()}%'),
+            Text('التقدم: ${(book.progress * 100).round()}%'),
             const Spacer(),
             Text(
               '${book.chapterCount} ${book.format == 'pdf' ? 'الصفحة' : 'الفصل'}',

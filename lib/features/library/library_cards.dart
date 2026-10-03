@@ -66,7 +66,7 @@ class ContinueReadingCard extends StatelessWidget {
                   LinearProgressIndicator(value: book.progress),
                   const SizedBox(height: 8),
                   Text(
-                    'هو قراءة:${(book.progress * 100).round()}%',
+                    'التقدم: ${(book.progress * 100).round()}%',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
